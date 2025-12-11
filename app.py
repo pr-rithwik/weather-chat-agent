@@ -3,13 +3,20 @@
 import streamlit as st
 from agent import chat
 from tools import get_coordinates_from_city, get_coordinates_from_ip
+from config import OPENWEATHER_API_KEY
+
+# Debug: Check if API key is loaded (remove after fixing)
+if OPENWEATHER_API_KEY:
+    st.sidebar.success(f"✅ API Key loaded: {OPENWEATHER_API_KEY[:8]}...")
+else:
+    st.sidebar.error("❌ API Key NOT loaded")
 
 
 def get_location() -> tuple[float, float, str]:
     """Get user location from either city input or IP detection."""
     location_method = st.radio(
         "How would you like to provide your location?",
-        ["Enter city name", "Auto-detect from IP"],
+        ["Auto-detect from IP", "Enter city name", "Enter coordinates"],
         horizontal=True
     )
     
@@ -20,15 +27,22 @@ def get_location() -> tuple[float, float, str]:
             if coords:
                 return coords[0], coords[1], f"📍 {city}"
             else:
-                st.error("City not found. Please try another name.")
+                st.error("City not found. Please try another name or use coordinates.")
                 return None, None, None
         return None, None, None
+    elif location_method == "Enter coordinates":
+        col1, col2 = st.columns(2)
+        with col1:
+            lat = st.number_input("Latitude", value=51.5074, format="%.4f")
+        with col2:
+            lon = st.number_input("Longitude", value=-0.1278, format="%.4f")
+        return lat, lon, f"📍 {lat}, {lon}"
     else:
         coords = get_coordinates_from_ip()
         if coords and coords[0] and coords[1]:
             return coords[0], coords[1], "📍 Auto-detected location"
         else:
-            st.error("Could not detect location. Please enter city manually.")
+            st.error("Could not detect location. Please use another method.")
             return None, None, None
 
 
