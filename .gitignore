@@ -23,5 +23,6 @@ Thumbs.db
 
 
 .cursor/
+.coverage
 
 dev/

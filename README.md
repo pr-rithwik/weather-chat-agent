@@ -16,7 +16,6 @@ A Python-based AI agent that uses Claude (Anthropic) to provide conversational w
 This project demonstrates professional Python development practices through a working AI agent that provides conversational weather information.
 
 **Key Highlights:**
-- ✅ **290 lines of Python** - Clean, maintainable code
 - ✅ **API Integration** - Claude API + OpenWeatherMap API
 - ✅ **Function Calling** - Claude decides when to use tools
 - ✅ **Production-Ready** - Error handling, validation, cost tracking
