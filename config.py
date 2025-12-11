@@ -3,9 +3,10 @@
 import os
 from dotenv import load_dotenv
 
+# Load .env for local development
 load_dotenv()
 
-# API Keys
+# Try Streamlit secrets first (for cloud deployment), fallback to env vars
 try:
     import streamlit as st
     ANTHROPIC_API_KEY = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
@@ -15,7 +16,6 @@ except (ImportError, FileNotFoundError):
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
     OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-
 # Claude settings
 CLAUDE_MODEL = "claude-sonnet-4-20250514"
 MAX_TOKENS = 1024
@@ -23,9 +23,6 @@ MAX_TOKENS = 1024
 # OpenWeatherMap settings
 WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather"
 GEOCODING_API_URL = "https://api.openweathermap.org/geo/1.0/direct"
-
-# IP-based location fallback
-IP_LOCATION_API = "https://ipapi.co/json/"
 
 # System prompt
 SYSTEM_PROMPT = """You are a helpful weather assistant. When users ask about weather, 

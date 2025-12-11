@@ -2,7 +2,7 @@
 
 from typing import Dict, Optional, Tuple
 import requests
-from config import OPENWEATHER_API_KEY, WEATHER_API_URL, GEOCODING_API_URL, IP_LOCATION_API
+from config import OPENWEATHER_API_KEY, WEATHER_API_URL, GEOCODING_API_URL
 
 
 # Tool schema for Claude
@@ -65,15 +65,3 @@ def get_coordinates_from_city(city: str) -> Optional[Tuple[float, float]]:
         return None
     
     return data[0]["lat"], data[0]["lon"]
-
-
-def get_coordinates_from_ip() -> Optional[Tuple[float, float]]:
-    """Get approximate coordinates from user's IP address."""
-    try:
-        response = requests.get(IP_LOCATION_API, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        
-        return data.get("latitude"), data.get("longitude")
-    except Exception:
-        return None
