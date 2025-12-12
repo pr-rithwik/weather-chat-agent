@@ -3,11 +3,12 @@
 from typing import Tuple
 import anthropic
 from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, MAX_TOKENS, SYSTEM_PROMPT
-from tools import WEATHER_TOOL, get_weather
+from tools import WEATHER_TOOL, FORECAST_TOOL, get_weather, get_forecast
 
 
 def chat(message: str, latitude: float, longitude: float) -> str:
     """Main entry point for chat interaction."""
+    # Initialize client with just the API key
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     
     # Initial call to Claude with tool definitions
@@ -33,7 +34,7 @@ def call_claude_with_tools(
         model=CLAUDE_MODEL,
         max_tokens=MAX_TOKENS,
         system=SYSTEM_PROMPT,
-        tools=[WEATHER_TOOL],
+        tools=[WEATHER_TOOL, FORECAST_TOOL],
         messages=[{
             "role": "user",
             "content": f"My location: latitude {latitude}, longitude {longitude}\n\n{message}"
@@ -51,6 +52,9 @@ def execute_tool(content: list) -> Tuple[str, str, dict]:
             
             if tool_name == "get_weather":
                 result = get_weather(**tool_input)
+                return tool_id, tool_name, result
+            elif tool_name == "get_forecast":
+                result = get_forecast(**tool_input)
                 return tool_id, tool_name, result
     
     raise ValueError("No tool use block found")
@@ -71,7 +75,7 @@ def send_tool_result(
         model=CLAUDE_MODEL,
         max_tokens=MAX_TOKENS,
         system=SYSTEM_PROMPT,
-        tools=[WEATHER_TOOL],
+        tools=[WEATHER_TOOL, FORECAST_TOOL],
         messages=[
             {
                 "role": "user",

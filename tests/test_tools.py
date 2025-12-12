@@ -2,7 +2,15 @@
 
 import pytest
 from unittest.mock import patch, Mock
-from tools import get_coordinates_from_city, get_weather
+import streamlit as st
+
+
+# Clear Streamlit cache before each test
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """Clear Streamlit cache before each test."""
+    st.cache_data.clear()
+    yield
 
 
 class TestGetCoordinatesFromCity:
@@ -18,6 +26,9 @@ class TestGetCoordinatesFromCity:
         ]
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
+        
+        # Import here to avoid caching issues
+        from tools import get_coordinates_from_city
         
         # Test
         result = get_coordinates_from_city("London")
@@ -35,6 +46,8 @@ class TestGetCoordinatesFromCity:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
         
+        from tools import get_coordinates_from_city
+        
         # Test
         result = get_coordinates_from_city("InvalidCityXYZ123")
         
@@ -47,8 +60,10 @@ class TestGetCoordinatesFromCity:
         # Mock timeout exception
         mock_get.side_effect = Exception("Timeout")
         
+        from tools import get_coordinates_from_city
+        
         # Test
-        result = get_coordinates_from_city("London")
+        result = get_coordinates_from_city("TimeoutCity")
         
         # Assert
         assert result is None
@@ -79,6 +94,8 @@ class TestGetWeather:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
         
+        from tools import get_weather
+        
         # Test
         result = get_weather(51.5074, -0.1278)
         
@@ -96,9 +113,67 @@ class TestGetWeather:
         mock_response.raise_for_status.side_effect = Exception("API Error")
         mock_get.return_value = mock_response
         
+        from tools import get_weather
+        
         # Test
         with pytest.raises(Exception):
-            get_weather(51.5074, -0.1278)
+            get_weather(99.9999, 99.9999)
+
+
+class TestGetForecast:
+    """Tests for weather forecast fetching."""
+    
+    @patch('tools.requests.get')
+    def test_valid_coordinates_returns_forecast(self, mock_get):
+        """Test that valid coordinates return 5-day forecast."""
+        # Mock API response
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "city": {"name": "London"},
+            "list": [
+                {
+                    "dt": 1702800000,
+                    "main": {"temp": 15.0, "humidity": 70},
+                    "weather": [{"description": "cloudy"}],
+                    "wind": {"speed": 3.0}
+                },
+                {
+                    "dt": 1702810800,
+                    "main": {"temp": 17.0, "humidity": 65},
+                    "weather": [{"description": "sunny"}],
+                    "wind": {"speed": 2.5}
+                }
+            ] * 20  # Repeat to simulate 5 days
+        }
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        from tools import get_forecast
+        
+        # Test
+        result = get_forecast(51.5074, -0.1278)
+        
+        # Assert
+        assert result is not None
+        assert "forecast" in result
+        assert "location" in result
+        assert result["location"] == "London"
+        assert isinstance(result["forecast"], list)
+        assert len(result["forecast"]) <= 5
+    
+    @patch('tools.requests.get')
+    def test_forecast_api_error_raises_exception(self, mock_get):
+        """Test that forecast API errors are properly raised."""
+        # Mock HTTP error
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = Exception("API Error")
+        mock_get.return_value = mock_response
+        
+        from tools import get_forecast
+        
+        # Test
+        with pytest.raises(Exception):
+            get_forecast(99.9999, 99.9999)
 
 
 # Run tests with: pytest tests/test_tools.py -v

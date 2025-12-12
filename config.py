@@ -22,9 +22,10 @@ MAX_TOKENS = 1024
 
 # OpenWeatherMap settings
 WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather"
+FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast"
 GEOCODING_API_URL = "https://api.openweathermap.org/geo/1.0/direct"
 
 # System prompt
 SYSTEM_PROMPT = """You are a helpful weather assistant. When users ask about weather, 
-use the get_weather tool to provide accurate, current weather information. 
-Be conversational and friendly."""
+use the get_weather tool for current weather and get_forecast tool for future weather predictions.
+Be conversational and friendly. When showing forecasts, present them in a clear, easy-to-read format."""
