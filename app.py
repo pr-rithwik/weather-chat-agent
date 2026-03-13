@@ -226,7 +226,7 @@ def main():
         city_input = st.text_input(
             "📍 Enter your city:",
             value=st.session_state.get("recent_selector", "") if st.session_state.get("recent_selector") else "",
-            placeholder="e.g., London, Paris, Tokyo, Vijayawada",
+            placeholder="e.g., London, Paris, Tokyo, Hyderabad",
             help="Type your city name to get started",
             max_chars=50,
             key="city_input"
@@ -333,7 +333,7 @@ def main():
         # Show example
         with st.expander("📖 How to use"):
             st.markdown("""
-            **Step 1:** Enter your city name (e.g., "London", "Vijayawada")
+            **Step 1:** Enter your city name (e.g., "London", "Hyderabad", "New York") in the input box
             
             **Step 2:** Click "Get Weather Data" to load weather information
             
