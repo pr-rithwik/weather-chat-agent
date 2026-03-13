@@ -89,7 +89,12 @@ class TestGetWeather:
             "wind": {
                 "speed": 3.5
             },
-            "name": "London"
+            "name": "London",
+            "sys": {                   # added: get_weather now reads sunrise/sunset from here
+                "sunrise": 1700000000,
+                "sunset":  1700040000
+            },
+            "timezone": 0             # added: get_weather now returns timezone_offset
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
