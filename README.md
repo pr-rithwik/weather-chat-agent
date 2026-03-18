@@ -1,13 +1,18 @@
 # 🌤️ Weather Chat Agent
 
-![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![Streamlit](https://img.shields.io/badge/streamlit-1.39+-red.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
-
 A conversational weather agent built on Claude's function calling API. Ask natural language questions about current conditions or the week ahead — Claude decides when to fetch data, reasons over it, and responds in context.
 
-[**🚀 Live Demo**](https://weather94.streamlit.app) | [**💬 Chat Guide**](CHAT_GUIDE.md)
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/streamlit-1.39+-red.svg)](https://streamlit.io/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://weather94.streamlit.app)
+
+---
+
+## Demo
+
+![Demo](assets/demo.gif)
 
 ---
 
@@ -19,9 +24,9 @@ The app also renders a visual dashboard alongside the chat: current conditions w
 
 ---
 
-## Key technical decisions
+## Key Technical Decisions
 
-**Function calling over prompt engineering** — Claude is given tool schemas for `get_weather` and `get_forecast` and decides autonomously when to call them. This means a question like *"is it going to rain?"* triggers a forecast fetch while *"what does 80% humidity feel like?"* doesn't hit the API at all.
+**Function calling over prompt engineering** — Claude is given tool schemas for `get_weather` and `get_forecast` and decides autonomously when to call them. A question like *"is it going to rain?"* triggers a forecast fetch while *"what does 80% humidity feel like?"* doesn't hit the API at all.
 
 **Stateful conversation** — each chat turn passes the full message history to Claude, not just the current message. Location context is injected once into the first user message rather than repeated on every turn, keeping the token count lean.
 
@@ -44,7 +49,7 @@ The app also renders a visual dashboard alongside the chat: current conditions w
 
 ---
 
-## Project structure
+## Project Structure
 
 ```
 weather-chat-agent/
@@ -63,7 +68,7 @@ weather-chat-agent/
 
 ---
 
-## Running locally
+## Running Locally
 
 ```bash
 git clone https://github.com/pr-rithwik/weather-chat-agent.git
@@ -85,12 +90,4 @@ You'll need an [Anthropic API key](https://console.anthropic.com/) and a free [O
 
 ## Cost
 
-Claude Sonnet 4 costs roughly $0.01–0.03 per conversation. The sidebar tracks token usage and estimated cost per session. OpenWeatherMap's free tier covers 1,000 calls/day — well above what the caching layer allows through.
-
----
-
-## What's next
-
-- Hourly forecast support
-- CI/CD with GitHub Actions
-- Performance and latency metrics
+The sidebar tracks token usage and estimated cost per session. See current Claude Sonnet pricing at [Anthropic's pricing page](https://www.anthropic.com/pricing). OpenWeatherMap's free tier covers 1,000 calls/day — well above what the caching layer allows through.
