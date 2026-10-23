@@ -1,47 +1,49 @@
-"""Configuration settings for the weather chat agent."""
+"""App settings: API keys, model, limits and the system prompt."""
 
 import os
+
 from dotenv import load_dotenv
 
-# Load .env for local development
 load_dotenv()
 
-# Try Streamlit secrets first (for cloud deployment), fallback to env vars
-try:
-    import streamlit as st
-    ANTHROPIC_API_KEY = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
-    OPENWEATHER_API_KEY = st.secrets.get("OPENWEATHER_API_KEY", os.getenv("OPENWEATHER_API_KEY"))
-except (ImportError, FileNotFoundError):
-    # Fallback to environment variables (local development)
-    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-    OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-# Claude settings
-CLAUDE_MODEL = "claude-sonnet-4-20250514"
+def _secret(name: str) -> str | None:
+    """Read a key from Streamlit secrets (cloud), falling back to env vars (local)."""
+    try:
+        import streamlit as st
+        return st.secrets.get(name) or os.getenv(name)
+    except Exception:
+        return os.getenv(name)
+
+
+ANTHROPIC_API_KEY = _secret("ANTHROPIC_API_KEY")
+OPENWEATHER_API_KEY = _secret("OPENWEATHER_API_KEY")
+
+# Claude
+CLAUDE_MODEL = "claude-sonnet-5-5"
 MAX_TOKENS = 1024
+MAX_AGENT_STEPS = 5          # max tool rounds per user message
+MAX_HISTORY_MESSAGES = 20    # messages sent to Claude per turn
 
-# OpenWeatherMap settings
-WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather"
-FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/forecast"
-GEOCODING_API_URL = "https://api.openweathermap.org/geo/1.0/direct"
+# USD per million tokens. Check https://platform.claude.com/docs/en/about-claude/pricing
+PRICE_PER_MTOK = {"input": 2.0, "output": 10.0}
 
-# System prompt
-SYSTEM_PROMPT = """You are a helpful weather assistant integrated into a weather application. 
+# OpenWeatherMap
+OPENWEATHER_BASE_URL = "https://api.openweathermap.org"
+REQUEST_TIMEOUT = 10
 
-When users ask about weather, use the get_weather tool for current weather and get_forecast tool for future weather predictions.
+SYSTEM_PROMPT = """You are a weather assistant in a chat app.
 
-The application automatically displays:
-- Visual weather icons
-- Interactive temperature and conditions charts
-- Smart recommendations based on weather data
-- Sunrise/sunset information
+How to work:
+- Use get_current_weather for conditions right now and get_forecast for anything in the next 5 days.
+- Fetch data for every city the question needs. For comparisons, fetch each city.
+- Never guess weather numbers. Only use data returned by the tools.
+- If a tool returns an error (for example, city not found), say so and ask the user to clarify.
+- General questions that need no live data (e.g. "what does 80% humidity feel like?") need no tool.
 
-Your role in the chat is to:
-- Answer weather-related questions conversationally
-- Provide insights about the weather data
-- Explain forecast trends
-- Help users understand weather conditions
+How to answer:
+- Answer the question directly first, then give up to 3 short, practical tips based on the data.
+- Be concise. The app shows the fetched data as cards and charts under your reply, so don't list every number.
+- Give temperatures in {unit} and wind in m/s.
 
-If users ask for graphs or visualizations, let them know that charts are already displayed above the chat interface when they load weather data using the "Get Weather Data" button.
-
-Be conversational, friendly, and focus on providing weather insights rather than just repeating data that's already visible in the UI."""
+{home_city_line}"""

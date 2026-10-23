@@ -1,71 +1,66 @@
 # Chatting with the Weather Assistant
 
-The chat isn't a search bar. It talks to Claude, so it understands what you're actually asking — not just keywords.
+The chat talks to Claude, so it understands what you're asking, not just keywords. It fetches live weather only when your question needs it.
 
 ---
 
-## The basics
+## Ask about any city
 
-Ask about current conditions in plain English.
+> - "What's it like in Chennai right now?"
+> - "Is it humid in Kolkata?"
+> - "How windy is it in Wellington, NZ?"
 
-> "What's it like outside?"
-> "Is it humid right now?"
-> "How strong is the wind?"
-
-Simple, direct. Claude fetches live data and answers.
+Add a country code if a name is ambiguous ("Paris, FR", "London, CA"). If you set **Your city** in the sidebar, you can skip the city name: "Should I take an umbrella?"
 
 ---
 
-## Where it gets more useful
+## Ask what to do about it
 
-The interesting part isn't asking *what* the weather is — it's asking *what to do about it*.
-
-> - "Should I take an umbrella?"
 > - "Good day to dry laundry outside?"
-> - "Can I ride my bike or is it too windy?"
+> - "Can I ride my bike to work or is it too windy?"
+> - "What should I wear for an evening walk?"
 
-Claude looks at everything together — temperature, feels-like, humidity, wind, conditions — and gives you a straight answer. Not a list of numbers.
+Claude weighs temperature, feels-like, humidity, wind and chance of rain together, and gives a straight answer with a few tips.
 
 ---
 
-## Planning the week
+## Plan the week
 
-The 5-day forecast loads automatically when you search a city. You can ask questions across the whole week:
+> - "Which day this week is best for hiking near Pune?"
+> - "Will it cool down in Delhi by the weekend?"
 
-> - "When's the best day to go hiking?"
-> - "Will it cool down by the weekend?"
-> - "Which days are going to be miserable?"
+---
 
-The charts already show the data visually. The chat is for when you want someone to interpret it.
+## Compare places
+
+> - "Goa or Mumbai for a beach trip this weekend?"
+> - "Where is it warmer right now, Shimla or Manali?"
+
+Claude fetches each city and compares them. You'll see a card or chart for every city it looked up.
 
 ---
 
 ## Follow-ups work
 
-Claude remembers what was said earlier in the conversation. You don't have to re-explain from scratch every message.
+Claude remembers the recent conversation:
 
-> - "What's the weather like?"
-> *"34°C, clear skies."*
-> - "Will it stay like this all week or drop?"
-> - "You mentioned low humidity — does that make it feel better at least?"
-
-This is the conversation history feature — it's what makes the chat feel like a back-and-forth rather than isolated questions.
+> - "What's the weather in Jaipur?"
+> - "And tomorrow?"
+> - "Compare that with Udaipur."
 
 ---
 
-## Making sense of the numbers
+## Make sense of the numbers
 
-> - "82% humidity — is that a lot?"
-> - "What does feels-like being 5 degrees lower actually mean?"
-> - "What's the difference between scattered and broken clouds?"
+> - "82% humidity: is that a lot?"
+> - "Why does it feel hotter than the temperature?"
 
-Useful if the dashboard is showing you values you're not sure how to interpret.
+These need no live data, so Claude answers directly.
 
 ---
 
 ## What it won't do
 
-- No historical weather — it can't tell you what last Tuesday was like
-- One city at a time — whatever's currently loaded in the dashboard
-- No hourly breakdown — daily forecast only
-- If you ask for a chart, it'll point you to the ones already on the page
+- No historical weather ("what was it like last Tuesday?")
+- No hourly breakdown; the forecast is daily, up to 5 days
+- Conversation resets when you refresh the page
