@@ -1,184 +1,96 @@
-"""Unit tests for tools module."""
+"""Unit tests for the weather API client and tool dispatcher (HTTP is mocked)."""
+
+from unittest.mock import Mock, patch
 
 import pytest
-from unittest.mock import patch, Mock
+import requests
 import streamlit as st
 
+from tools import run_tool
+from weather_api import WeatherAPIError, current_weather, forecast, geocode
 
-# Clear Streamlit cache before each test
+LONDON = [{"lat": 51.5, "lon": -0.12, "name": "London", "country": "GB"}]
+
+
 @pytest.fixture(autouse=True)
 def clear_cache():
-    """Clear Streamlit cache before each test."""
     st.cache_data.clear()
     yield
 
 
-class TestGetCoordinatesFromCity:
-    """Tests for city to coordinates conversion."""
-    
-    @patch('tools.requests.get')
+def response(json_data=None, error=None):
+    """A fake requests.Response."""
+    resp = Mock()
+    resp.json.return_value = json_data
+    resp.raise_for_status = Mock(side_effect=error)
+    return resp
+
+
+class TestGeocode:
+    @patch("weather_api.requests.get")
     def test_valid_city_returns_coordinates(self, mock_get):
-        """Test that a valid city returns lat/lon coordinates."""
-        # Mock API response
-        mock_response = Mock()
-        mock_response.json.return_value = [
-            {"lat": 51.5074, "lon": -0.1278, "name": "London"}
+        mock_get.return_value = response(LONDON)
+        assert geocode("London") == (51.5, -0.12, "London, GB")
+
+    @patch("weather_api.requests.get")
+    def test_unknown_city_raises(self, mock_get):
+        mock_get.return_value = response([])
+        with pytest.raises(WeatherAPIError, match="not found"):
+            geocode("NoSuchCity")
+
+    @patch("weather_api.requests.get")
+    def test_timeout_raises(self, mock_get):
+        mock_get.side_effect = requests.Timeout()
+        with pytest.raises(WeatherAPIError, match="timed out"):
+            geocode("London")
+
+
+class TestCurrentWeather:
+    @patch("weather_api.requests.get")
+    def test_returns_weather_in_city_local_time(self, mock_get):
+        mock_get.side_effect = [
+            response(LONDON),
+            response({
+                "main": {"temp": 15.5, "feels_like": 14.2, "humidity": 65},
+                "weather": [{"description": "few clouds"}],
+                "wind": {"speed": 3.5},
+                "sys": {"sunrise": 1700000000, "sunset": 1700030000},
+                "timezone": 3600,  # UTC+1
+            }),
         ]
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-        
-        # Import here to avoid caching issues
-        from tools import get_coordinates_from_city
-        
-        # Test
-        result = get_coordinates_from_city("London")
-        
-        # Assert
-        assert result is not None
-        assert result == (51.5074, -0.1278)
-    
-    @patch('tools.requests.get')
-    def test_invalid_city_returns_none(self, mock_get):
-        """Test that an invalid city returns None."""
-        # Mock API response with empty list
-        mock_response = Mock()
-        mock_response.json.return_value = []
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-        
-        from tools import get_coordinates_from_city
-        
-        # Test
-        result = get_coordinates_from_city("InvalidCityXYZ123")
-        
-        # Assert
-        assert result is None
-    
-    @patch('tools.requests.get')
-    def test_api_timeout_returns_none(self, mock_get):
-        """Test that API timeout is handled gracefully."""
-        # Mock timeout exception
-        mock_get.side_effect = Exception("Timeout")
-        
-        from tools import get_coordinates_from_city
-        
-        # Test
-        result = get_coordinates_from_city("TimeoutCity")
-        
-        # Assert
-        assert result is None
-
-
-class TestGetWeather:
-    """Tests for weather data fetching."""
-    
-    @patch('tools.requests.get')
-    def test_valid_coordinates_returns_weather(self, mock_get):
-        """Test that valid coordinates return weather data."""
-        # Mock API response
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            "main": {
-                "temp": 15.5,
-                "feels_like": 14.2,
-                "humidity": 65
-            },
-            "weather": [
-                {"description": "partly cloudy"}
-            ],
-            "wind": {
-                "speed": 3.5
-            },
-            "name": "London",
-            "sys": {                   # added: get_weather now reads sunrise/sunset from here
-                "sunrise": 1700000000,
-                "sunset":  1700040000
-            },
-            "timezone": 0             # added: get_weather now returns timezone_offset
-        }
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-        
-        from tools import get_weather
-        
-        # Test
-        result = get_weather(51.5074, -0.1278)
-        
-        # Assert
-        assert result is not None
+        result = current_weather("London")
+        assert result["city"] == "London, GB"
         assert result["temperature"] == 15.5
-        assert result["condition"] == "partly cloudy"
-        assert result["location"] == "London"
-    
-    @patch('tools.requests.get')
-    def test_api_error_raises_exception(self, mock_get):
-        """Test that API errors are properly raised."""
-        # Mock HTTP error
-        mock_response = Mock()
-        mock_response.raise_for_status.side_effect = Exception("API Error")
-        mock_get.return_value = mock_response
-        
-        from tools import get_weather
-        
-        # Test
-        with pytest.raises(Exception):
-            get_weather(99.9999, 99.9999)
+        assert result["sunrise"] == "11:13 PM"  # 22:13 UTC + 1h
+        assert result["daylight_hours"] == 8.3
+
+    @patch("weather_api.requests.get")
+    def test_bad_api_key_raises(self, mock_get):
+        error = requests.HTTPError(response=Mock(status_code=401))
+        mock_get.side_effect = [response(LONDON), response(error=error)]
+        with pytest.raises(WeatherAPIError, match="API key"):
+            current_weather("London")
 
 
-class TestGetForecast:
-    """Tests for weather forecast fetching."""
-    
-    @patch('tools.requests.get')
-    def test_valid_coordinates_returns_forecast(self, mock_get):
-        """Test that valid coordinates return 5-day forecast."""
-        # Mock API response
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            "city": {"name": "London"},
-            "list": [
-                {
-                    "dt": 1702800000,
-                    "main": {"temp": 15.0, "humidity": 70},
-                    "weather": [{"description": "cloudy"}],
-                    "wind": {"speed": 3.0}
-                },
-                {
-                    "dt": 1702810800,
-                    "main": {"temp": 17.0, "humidity": 65},
-                    "weather": [{"description": "sunny"}],
-                    "wind": {"speed": 2.5}
-                }
-            ] * 20  # Repeat to simulate 5 days
-        }
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-        
-        from tools import get_forecast
-        
-        # Test
-        result = get_forecast(51.5074, -0.1278)
-        
-        # Assert
-        assert result is not None
-        assert "forecast" in result
-        assert "location" in result
-        assert result["location"] == "London"
-        assert isinstance(result["forecast"], list)
-        assert len(result["forecast"]) <= 5
-    
-    @patch('tools.requests.get')
-    def test_forecast_api_error_raises_exception(self, mock_get):
-        """Test that forecast API errors are properly raised."""
-        # Mock HTTP error
-        mock_response = Mock()
-        mock_response.raise_for_status.side_effect = Exception("API Error")
-        mock_get.return_value = mock_response
-        
-        from tools import get_forecast
-        
-        # Test
-        with pytest.raises(Exception):
-            get_forecast(99.9999, 99.9999)
+class TestForecast:
+    @patch("weather_api.requests.get")
+    def test_groups_slots_into_at_most_five_days(self, mock_get):
+        slots = [{
+            "dt": 1702800000 + i * 10800,  # every 3 hours
+            "main": {"temp": 10 + i % 8, "humidity": 70},
+            "weather": [{"description": "light rain"}],
+            "wind": {"speed": 3.0},
+            "pop": 0.4,
+        } for i in range(40)]
+        mock_get.side_effect = [response(LONDON),
+                                response({"city": {"timezone": 0}, "list": slots})]
 
+        result = forecast("London")
+        assert result["city"] == "London, GB"
+        assert len(result["days"]) == 5
+        assert result["days"][0]["rain_chance"] == 40
 
-# Run tests with: pytest tests/test_tools.py -v
+    def test_tool_errors_are_returned_not_raised(self):
+        with patch("weather_api.requests.get", return_value=response([])):
+            result, is_error = run_tool("get_forecast", {"city": "NoSuchCity"})
+        assert is_error and "not found" in result
